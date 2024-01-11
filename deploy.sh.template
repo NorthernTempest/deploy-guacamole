@@ -140,7 +140,7 @@ if [ ! -f ./docker-guacamole.service ]; then
 			serviceGroup=$serviceGroupInput
 		fi
 	fi
-	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$( echo $PWD | sed 's:/:\\/:g' )/g" > ./docker-guacamole.service
+	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$PWD/g" > ./docker-guacamole.service
 REPLACEMEWITHSERVICETEMPLATE
 EOF
 	sudo chmod 755 ./docker-guacamole.service
