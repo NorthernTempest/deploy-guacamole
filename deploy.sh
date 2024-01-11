@@ -75,7 +75,7 @@ if [ -x "$(command -v docker)" ]; then
 
 	read -p "Docker is already installed. Would you like to update it? (y/[n]): " updateDocker
 
-	if [ ${updateDocker,,} -eq "y" -o ${updateDocker,,} -eq "yes" ]; then
+	if [ "${updateDocker,,}" = "y" ] || [ "${updateDocker,,}" = "yes" ]; then
 
 		# Remove old docker packages
 		for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
@@ -83,7 +83,7 @@ if [ -x "$(command -v docker)" ]; then
 		done
 
 		# Install docker
-		curl -fsSL https://get.docker.com -o | sudo sh
+		curl -fsSL https://get.docker.com | sudo sh
 
 	fi
 else
@@ -94,8 +94,17 @@ else
 	done
 
 	# Install docker
-	curl -fsSL https://get.docker.com -o | sudo sh
+	curl -fsSL https://get.docker.com | sudo sh
 
+fi
+
+
+if [ -f /.dockerenv ]; then
+	sudo service docker start
+else
+	sudo systemctl enable docker.service
+	sudo systemctl daemon-reload
+	sudo systemctl start docker
 fi
 
 ## Handle User Input ##
@@ -107,12 +116,13 @@ fi
 # Create .env file if missing
 if [ ! -f ./.env ]; then
 	if [ $useDefaults -eq 0 -a $dbPassOverwritten -eq 0 ]; then
-		read -p "Enter a custom password for the guacamole database user? [random]: " dbPassInput
+		read -s -p "Enter a custom password for the guacamole database user? [random]: " dbPassInput
 		if [ ! -z "$dbPassInput" ]; then
 			dbPass=$dbPassInput
 		fi
+		echo ''
 	fi
-	cat <<EOF | sed "s/REPLACEMEWITHDBPASS/$( echo $dbPass | sed 's/[][`~!@#$%^&*()-_=+{}\|;:",<.>/?'"'"']/\\&/g' )/g" > ./.env
+	cat <<EOF | sed "s/REPLACEMEWITHDBPASS/$( echo $dbPass | sed 's/\\/\\\\/g' | sed 's/[]['"'"']/\\&/g' | sed 's/[][`~!@#$%^&*()-_=+{}|;:",<.>/?]/\\&/g' )/g" > ./.env
 # Author: Jesse Goerzen
 # License: MIT
 
@@ -250,13 +260,11 @@ chmod 644 ./pg-init/initdb.sql
 
 sudo cp ./docker-guacamole.service /etc/systemd/system/docker-guacamole.service
 if [ -f /.dockerenv ]; then
-	sudo service enable docker-guacamole.service
-	sudo service daemon-reload
-	sudo service start docker-guacamole.service
+	sudo service docker-guacamole start
 else
 	sudo systemctl enable docker-guacamole.service
 	sudo systemctl daemon-reload
-	sudo systemctl start docker-guacamole.service
+	sudo systemctl start docker-guacamole
 fi
 
 ## Cleanup ##
