@@ -59,9 +59,9 @@ if [ -f /etc/systemd/system/docker-guacamole.service ]; then
 fi
 
 cd ..
-if [ -f ./test-build ]; then
+if [ -d ./test-build ]; then
 	sudo rm -rf ./test-build/
 fi
 if [ -f ./deploy.sh ]; then
-	sudo rm -rf ./deploy.sh
+	sudo rm ./deploy.sh
 fi
