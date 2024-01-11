@@ -112,7 +112,7 @@ if [ ! -f ./.env ]; then
 			dbPass=$dbPassInput
 		fi
 	fi
-	cat <<EOF | sed "s/REPLACEMEWITHDBPASS/$( echo $dbPass | sed 's:/:\\/:g' )/g" > ./.env
+	cat <<EOF | sed "s/REPLACEMEWITHDBPASS/$( echo $dbPass | sed 's/[][`~!@#$%^&*()-_=+{}\|;:",<.>/?'"'"']/\\&/g' )/g" > ./.env
 # Author: Jesse Goerzen
 # License: MIT
 
@@ -199,7 +199,7 @@ if [ ! -f ./docker-guacamole.service ]; then
 			serviceGroup=$serviceGroupInput
 		fi
 	fi
-	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$( echo $PWD | sed 's:/:\\/:g' )/g" > ./docker-guacamole.service
+	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$( echo $PWD | sed 's/[][`~!@#$%^&*()-_=+{}\|;:",<.>/?'"'"']/\\&/g' )/g" > ./docker-guacamole.service
 [Unit]
 Description=Hosts Guacamole on port 8080 with docker-compose.
 After=docker.service
