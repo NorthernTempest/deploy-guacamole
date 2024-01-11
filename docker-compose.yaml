@@ -1,0 +1,55 @@
+version: '3'
+
+networks:
+  guac:
+    driver: bridge
+
+services:
+
+  # PostgreSQL database
+  pg:
+    image: postgres:16.1-alpine
+    container_name: postgres
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/guacamole
+      POSTGRES_DATABASE: ${GUAC_PG_DB}
+      POSTGRES_USER: ${GUAC_PG_USER}
+      POSTGRES_PASSWORD: ${GUAC_PG_PASS}
+    networks:
+      - guac
+    volumes:
+      - ./pg-init:/docker-entrypoint-initdb.d:z
+      - ./pg-data:/var/lib/postgresql/data:Z
+
+  # Guacamole server
+  guacd:
+    image: guacamole/guacd:1.5.4
+    container_name: guacd
+    restart: always
+    networks:
+      - guac
+    volumes:
+      - ./gd-drive:/drive:rw
+      - ./gd-record:/record:rw
+
+  # Guacamole web client
+  guac:
+    image: guacamole/guacamole:1.5.4
+    container_name: guacamole
+    restart: always
+    depends_on:
+      - guacd
+      - pg
+    links:
+      - guacd
+    environment:
+      GUACD_HOSTNAME: guacd
+      POSTGRES_HOSTNAME: pg
+      POSTGRES_DATABASE: ${GUAC_PG_DB}
+      POSTGRES_USER: ${GUAC_PG_USER}
+      POSTGRES_PASSWORD: ${GUAC_PG_PASS}
+    networks:
+      - guac
+    ports:
+      - 8080/tcp:8080/tcp

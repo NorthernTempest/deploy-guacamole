@@ -1,0 +1,15 @@
+[Unit]
+Description=Hosts Guacamole on port 8080 with docker-compose.
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=REPLACEMEWITHUSER
+Group=REPLACEMEWITHGROUP
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yml up --detach"
+ExecStop=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yml stop"
+
+[Install]
+WantedBy=multi-user.target

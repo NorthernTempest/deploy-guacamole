@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Generated Files
+docker-guacamole.service
+pg-data
+pg-init
+gd-drive
+gd-record
+
+# Test Files
+test-build
+
+# Logs
+logs
+
+# Dev Config
+vscode
+!vscode/settings.json
