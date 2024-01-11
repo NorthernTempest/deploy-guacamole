@@ -118,7 +118,7 @@ if [ ! -f ./.env ]; then
 
 GUAC_PG_DB=guacamole
 GUAC_PG_USER=guacamole
-GUAC_PG_PASSWORD=REPLACEMEWITHDBPASS
+GUAC_PG_PASSWORD='REPLACEMEWITHDBPASS'
 EOF
 	sudo chmod 640 ./.env
 fi
@@ -199,7 +199,7 @@ if [ ! -f ./docker-guacamole.service ]; then
 			serviceGroup=$serviceGroupInput
 		fi
 	fi
-	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$PWD/g" > ./docker-guacamole.service
+	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$( echo $PWD | sed 's:/:\\/:g' )/g" > ./docker-guacamole.service
 [Unit]
 Description=Hosts Guacamole on port 8080 with docker-compose.
 After=docker.service
