@@ -19,7 +19,7 @@ Help() {
 	cat <<EOF
 This script will deploy the guacamole stack over docker.
 
-Syntax: ./deploy.sh [-h/-u/-g/-p]
+Syntax: ./deploy.sh [-h/-u/-g/-p/-d]
 options:
 h	Prints a detailed description of this script.
 u	Select the user that will run the docker instance.
