@@ -220,8 +220,8 @@ User=REPLACEMEWITHUSER
 Group=REPLACEMEWITHGROUP
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yml up --detach"
-ExecStop=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yml stop"
+ExecStart=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml up --detach"
+ExecStop=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml stop"
 
 [Install]
 WantedBy=multi-user.target
