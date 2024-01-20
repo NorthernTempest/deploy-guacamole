@@ -13,7 +13,7 @@ To create a basic implementation, do the following:
 2. Save the script to the directory in which you want to store all files related to Guacamole.
 3. Run `sudo bash deploy.sh`.
 4. Follow the prompts.
-5. Access guacamole from the web browser by opening port 8080 on the device that the script was run on.
+5. Access guacamole from the web browser by going to http://HOSTNAME:8080/guacamole/ where HOSTNAME is the ip or hostname of the device that the script was run on.
 
 If you want to change the default configuration, do the following:
 
@@ -23,5 +23,11 @@ If you want to change the default configuration, do the following:
 4. Repeat the steps above for creating a basic implementation (excluding step #1).
 
 If you want to start/stop guacamole use the commands `sudo systemctl start docker-guacamole.service` or `sudo systemctl stop docker-guacamole.service`.
+
+If you want to view the logs for the guacamole client, use the command `docker compose logs guac`.
+
+If you want to view the logs for the guacamole server, use the command `docker compose logs guacd`.
+
+If you want to view the logs for postgres, use the command `docker compose logs pg`.
 
 ~~You can also test the compiled script by running `sudo bash test.sh`.~~ Note that more tests need to be added. In the meantime, running test.sh will not be an adequate test of the compiled script.
