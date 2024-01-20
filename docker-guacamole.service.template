@@ -1,5 +1,5 @@
 [Unit]
-Description=Hosts Guacamole on port 8080 with docker-compose.
+Description=Apache Guacamole server docker compose group 
 After=docker.service
 Requires=docker.service
 
@@ -8,6 +8,7 @@ User=REPLACEMEWITHUSER
 Group=REPLACEMEWITHGROUP
 Type=oneshot
 RemainAfterExit=yes
+EnvironmentFile=REPLACEMEWITHPWD/.env
 ExecStart=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml up --detach"
 ExecStop=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml stop"
 

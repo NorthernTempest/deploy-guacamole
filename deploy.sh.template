@@ -10,6 +10,8 @@
 ###############################################################################
 
 cd "$(dirname "$0")"
+sudo systemctl stop docker-guacamole.service
+sudo rm -r gd-drive gd-record pg-data pg-init
 
 ## Functions ##
 ###############################################################################
@@ -36,7 +38,7 @@ serviceUser=$(whoami)
 serviceUserOverwritten=0
 serviceGroup=$(groups | awk '{print $1}')
 serviceGroupOverwritten=0
-dbPass=$(cat /dev/urandom | tr -cd '[:graph:]' | head -c 32)
+dbPass=$(cat /dev/urandom | tr -cd '[:alnum:]' | head -c 32)
 dbPassOverwritten=0
 useDefaults=0
 
@@ -113,8 +115,8 @@ fi
 ## Generate Files ##
 ###############################################################################
 
-# Create .env file if missing
-if [ ! -f ./.env ]; then
+# Create .env file if missing or if template is newer than instance
+if [ ! -f './.env' ] || [ './.env' -ot './deploy.sh' ]; then
 	if [ $useDefaults -eq 0 -a $dbPassOverwritten -eq 0 ]; then
 		read -s -p "Enter a custom password for the guacamole database user? [random]: " dbPassInput
 		if [ ! -z "$dbPassInput" ]; then
@@ -129,7 +131,7 @@ EOF
 fi
 
 # Create docker-compose.yaml if missing
-if [ ! -f ./docker-compose.yaml ]; then
+if [ ! -f './docker-compose.yaml' ] || [ './docker-compose.yaml' -ot './deploy.sh' ]; then
 	cat <<EOF > ./docker-compose.yaml
 REPLACEMEWITHDOCKERCOMPOSEFILE
 EOF
@@ -137,7 +139,7 @@ EOF
 fi
 
 # Create docker-guacamole.service if missing
-if [ ! -f ./docker-guacamole.service ]; then
+if [ ! -f './docker-guacamole.service' ] || [ './docker-guacamole.service' -ot './deploy.sh' ]; then
 	if [ $useDefaults -eq 0 -a $serviceUserOverwritten -eq 0 ]; then
 		read -p "Enter the user that will run the docker instance [$serviceUser]: " serviceUserInput
 		if [ ! -z "$serviceUserInput" ]; then
@@ -159,28 +161,28 @@ fi
 ## Create Required Directories ##
 ###############################################################################
 
-if [ ! -d ./gd-drive ]; then
-	mkdir ./gd-drive
-	sudo chmod 750 ./gd-drive
-fi
-if [ ! -d ./gd-record ]; then
-	mkdir ./gd-record
-	sudo chmod 750 ./gd-record
-fi
+#if [ ! -d ./gd-drive ]; then
+#	mkdir ./gd-drive
+#	sudo chmod 750 ./gd-drive
+#fi
+#if [ ! -d ./gd-record ]; then
+#	mkdir ./gd-record
+#	sudo chmod 750 ./gd-record
+#fi
 if [ ! -d ./pg-init ]; then
 	mkdir ./pg-init
-	sudo chmod 750 ./pg-init
+	sudo chmod 755 ./pg-init
 fi
-if [ ! -d ./pg-data ]; then
-	mkdir ./pg-data
-	sudo chmod 750 ./pg-data
-fi
+#if [ ! -d ./pg-data ]; then
+#	mkdir ./pg-data
+#	sudo chmod 750 ./pg-data
+#fi
 
 ## Build init script ##
 ###############################################################################
 
-docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgres > ./pg-init/initdb.sql
-chmod 644 ./pg-init/initdb.sql
+docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgresql > ./pg-init/initdb.sql
+sudo chmod 755 ./pg-init/initdb.sql
 
 ## Deploy Service File ##
 ###############################################################################

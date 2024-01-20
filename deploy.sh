@@ -10,6 +10,8 @@
 ###############################################################################
 
 cd "$(dirname "$0")"
+sudo systemctl stop docker-guacamole.service
+sudo rm -r gd-drive gd-record pg-data pg-init
 
 ## Functions ##
 ###############################################################################
@@ -36,7 +38,7 @@ serviceUser=$(whoami)
 serviceUserOverwritten=0
 serviceGroup=$(groups | awk '{print $1}')
 serviceGroupOverwritten=0
-dbPass=$(cat /dev/urandom | tr -cd '[:graph:]' | head -c 32)
+dbPass=$(cat /dev/urandom | tr -cd '[:alnum:]' | head -c 32)
 dbPassOverwritten=0
 useDefaults=0
 
@@ -113,8 +115,8 @@ fi
 ## Generate Files ##
 ###############################################################################
 
-# Create .env file if missing
-if [ ! -f ./.env ]; then
+# Create .env file if missing or if template is newer than instance
+if [ ! -f './.env' ] || [ './.env' -ot './deploy.sh' ]; then
 	if [ $useDefaults -eq 0 -a $dbPassOverwritten -eq 0 ]; then
 		read -s -p "Enter a custom password for the guacamole database user? [random]: " dbPassInput
 		if [ ! -z "$dbPassInput" ]; then
@@ -128,13 +130,13 @@ if [ ! -f ./.env ]; then
 
 GUAC_PG_DB=guacamole
 GUAC_PG_USER=guacamole
-GUAC_PG_PASSWORD='REPLACEMEWITHDBPASS'
+GUAC_PG_PASS='REPLACEMEWITHDBPASS'
 EOF
 	sudo chmod 640 ./.env
 fi
 
 # Create docker-compose.yaml if missing
-if [ ! -f ./docker-compose.yaml ]; then
+if [ ! -f './docker-compose.yaml' ] || [ './docker-compose.yaml' -ot './deploy.sh' ]; then
 	cat <<EOF > ./docker-compose.yaml
 version: '3'
 
@@ -150,15 +152,15 @@ services:
     container_name: postgres
     restart: always
     environment:
-      PGDATA: /var/lib/postgresql/data/guacamole
-      POSTGRES_DATABASE: \${GUAC_PG_DB}
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: \${GUAC_PG_DB}
       POSTGRES_USER: \${GUAC_PG_USER}
       POSTGRES_PASSWORD: \${GUAC_PG_PASS}
     networks:
-      - guac
+    - guac
     volumes:
-      - ./pg-init:/docker-entrypoint-initdb.d:z
-      - ./pg-data:/var/lib/postgresql/data:Z
+    - ./pg-init:/docker-entrypoint-initdb.d:rwz
+    - ./pg-data:/var/lib/postgresql/data:rw
 
   # Guacamole server
   guacd:
@@ -166,10 +168,10 @@ services:
     container_name: guacd
     restart: always
     networks:
-      - guac
+    - guac
     volumes:
-      - ./gd-drive:/drive:rw
-      - ./gd-record:/record:rw
+    - ./gd-drive:/drive:rw
+    - ./gd-record:/record:rw
 
   # Guacamole web client
   guac:
@@ -177,26 +179,26 @@ services:
     container_name: guacamole
     restart: always
     depends_on:
-      - guacd
-      - pg
+    - guacd
+    - pg
     links:
-      - guacd
+    - guacd
     environment:
       GUACD_HOSTNAME: guacd
-      POSTGRES_HOSTNAME: pg
-      POSTGRES_DATABASE: \${GUAC_PG_DB}
-      POSTGRES_USER: \${GUAC_PG_USER}
-      POSTGRES_PASSWORD: \${GUAC_PG_PASS}
+      POSTGRESQL_HOSTNAME: pg
+      POSTGRESQL_DATABASE: \${GUAC_PG_DB}
+      POSTGRESQL_USER: \${GUAC_PG_USER}
+      POSTGRESQL_PASSWORD: \${GUAC_PG_PASS}
     networks:
-      - guac
+    - guac
     ports:
-      - 8080/tcp:8080/tcp
+    - 8080:8080/tcp
 EOF
 	sudo chmod 750 ./docker-compose.yaml
 fi
 
 # Create docker-guacamole.service if missing
-if [ ! -f ./docker-guacamole.service ]; then
+if [ ! -f './docker-guacamole.service' ] || [ './docker-guacamole.service' -ot './deploy.sh' ]; then
 	if [ $useDefaults -eq 0 -a $serviceUserOverwritten -eq 0 ]; then
 		read -p "Enter the user that will run the docker instance [$serviceUser]: " serviceUserInput
 		if [ ! -z "$serviceUserInput" ]; then
@@ -211,7 +213,7 @@ if [ ! -f ./docker-guacamole.service ]; then
 	fi
 	cat <<EOF | sed "s/REPLACEMEWITHUSER/$serviceUser/g; s/REPLACEMEWITHGROUP/$serviceGroup/g; s/REPLACEMEWITHPWD/$( echo $PWD | sed 's/[][`~!@#$%^&*()-_=+{}\|;:",<.>/?'"'"']/\\&/g' )/g" > ./docker-guacamole.service
 [Unit]
-Description=Hosts Guacamole on port 8080 with docker-compose.
+Description=Apache Guacamole server docker compose group 
 After=docker.service
 Requires=docker.service
 
@@ -220,6 +222,7 @@ User=REPLACEMEWITHUSER
 Group=REPLACEMEWITHGROUP
 Type=oneshot
 RemainAfterExit=yes
+EnvironmentFile=REPLACEMEWITHPWD/.env
 ExecStart=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml up --detach"
 ExecStop=/bin/bash -c "docker compose -f REPLACEMEWITHPWD/docker-compose.yaml stop"
 
@@ -232,28 +235,28 @@ fi
 ## Create Required Directories ##
 ###############################################################################
 
-if [ ! -d ./gd-drive ]; then
-	mkdir ./gd-drive
-	sudo chmod 750 ./gd-drive
-fi
-if [ ! -d ./gd-record ]; then
-	mkdir ./gd-record
-	sudo chmod 750 ./gd-record
-fi
+#if [ ! -d ./gd-drive ]; then
+#	mkdir ./gd-drive
+#	sudo chmod 750 ./gd-drive
+#fi
+#if [ ! -d ./gd-record ]; then
+#	mkdir ./gd-record
+#	sudo chmod 750 ./gd-record
+#fi
 if [ ! -d ./pg-init ]; then
 	mkdir ./pg-init
-	sudo chmod 750 ./pg-init
+	sudo chmod 755 ./pg-init
 fi
-if [ ! -d ./pg-data ]; then
-	mkdir ./pg-data
-	sudo chmod 750 ./pg-data
-fi
+#if [ ! -d ./pg-data ]; then
+#	mkdir ./pg-data
+#	sudo chmod 750 ./pg-data
+#fi
 
 ## Build init script ##
 ###############################################################################
 
-docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgres > ./pg-init/initdb.sql
-chmod 644 ./pg-init/initdb.sql
+docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --postgresql > ./pg-init/initdb.sql
+sudo chmod 755 ./pg-init/initdb.sql
 
 ## Deploy Service File ##
 ###############################################################################

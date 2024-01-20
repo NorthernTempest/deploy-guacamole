@@ -12,15 +12,15 @@ services:
     container_name: postgres
     restart: always
     environment:
-      PGDATA: /var/lib/postgresql/data/guacamole
-      POSTGRES_DATABASE: ${GUAC_PG_DB}
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_DB: ${GUAC_PG_DB}
       POSTGRES_USER: ${GUAC_PG_USER}
       POSTGRES_PASSWORD: ${GUAC_PG_PASS}
     networks:
-      - guac
+    - guac
     volumes:
-      - ./pg-init:/docker-entrypoint-initdb.d:z
-      - ./pg-data:/var/lib/postgresql/data:Z
+    - ./pg-init:/docker-entrypoint-initdb.d:rwz
+    - ./pg-data:/var/lib/postgresql/data:rw
 
   # Guacamole server
   guacd:
@@ -28,10 +28,10 @@ services:
     container_name: guacd
     restart: always
     networks:
-      - guac
+    - guac
     volumes:
-      - ./gd-drive:/drive:rw
-      - ./gd-record:/record:rw
+    - ./gd-drive:/drive:rw
+    - ./gd-record:/record:rw
 
   # Guacamole web client
   guac:
@@ -39,17 +39,17 @@ services:
     container_name: guacamole
     restart: always
     depends_on:
-      - guacd
-      - pg
+    - guacd
+    - pg
     links:
-      - guacd
+    - guacd
     environment:
       GUACD_HOSTNAME: guacd
-      POSTGRES_HOSTNAME: pg
-      POSTGRES_DATABASE: ${GUAC_PG_DB}
-      POSTGRES_USER: ${GUAC_PG_USER}
-      POSTGRES_PASSWORD: ${GUAC_PG_PASS}
+      POSTGRESQL_HOSTNAME: pg
+      POSTGRESQL_DATABASE: ${GUAC_PG_DB}
+      POSTGRESQL_USER: ${GUAC_PG_USER}
+      POSTGRESQL_PASSWORD: ${GUAC_PG_PASS}
     networks:
-      - guac
+    - guac
     ports:
-      - 8080/tcp:8080/tcp
+    - 8080:8080/tcp
